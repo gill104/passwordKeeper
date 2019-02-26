@@ -7,7 +7,8 @@ import string
 import sys
 import pyperclip
 
-
+# add username to password
+# at the moment its only location and password
 class Passwords:
     def __init__(self):
         print('here')
