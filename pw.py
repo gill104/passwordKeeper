@@ -62,17 +62,27 @@ class Passwords:
     def _searchForLoc(self):
         for location, user in self._passList.items():
             for u1, p, in user.items():
-                if u1 in self._user:
+                if u1 == self._user:
                     return True
         return False
 
+    def _normalizeLocation(self, loc):
+        location = ''
+        for x in loc:
+            if x == ' ':
+                location += '_'
+            else:
+                location += x.lower()
+        print(location)
+        return location
     """
         Gets the key and password from user and checks if its a user inputed password or to generate a password
         calls the appropriate method
     """
+    # add a filter to location spaces == _ and all lowercase
     def _addInformation(self, loc, user, pas):
         self._setUser(user)
-        self._setloc(loc)
+        self._setloc(self._normalizeLocation(loc))
         if '!gen' in pas:
             val = pas.split(' ')
             # for user defined length
