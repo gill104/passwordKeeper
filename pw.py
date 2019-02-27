@@ -53,6 +53,7 @@ class Passwords:
     def _saveKeyPairValue(self):
         with open('newFile.pickle', 'wb') as handle:
             pickle.dump(self._passList, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        self._resetParameters()
         input('Press enter to continue...')
 
     """
@@ -74,10 +75,10 @@ class Passwords:
         self._setloc(loc)
         if '!gen' in pas:
             val = pas.split(' ')
+            # for user defined length
             if len(val) > 1:
                 print(val[1])
                 self._generatePassword(val[1])
-
             else:
                 self._generatePassword(val[0])
         else:
@@ -102,15 +103,26 @@ class Passwords:
 
         randPas = ''.join([random.choice(string.ascii_letters + string.digits + string.punctuation)
                            for n in range(pasLength)])
-        self._setPassword(randPas)
 
+        self._setPassword(randPas)
+        self._checkifValidInput()
+        self._checkIfValidLength()
+
+        if not self._passwordFlags():
+            self._generatePassword(v)
+
+    def _passwordFlags(self):
+        if self._minLength and self._weirdSymbol and self._capLetter and self._hasNumber and self._hasLetter and self._noSpace:
+            return True
+        print('INVALID PASSWORD')
+        return False
     """
         Checks password. Calls to see if length and valid inputs. If corrects adds 
     """
     def _checkPasswordValidation(self):
         self._checkIfValidLength()
         self._checkifValidInput()
-        if self._minLength and self._weirdSymbol and self._capLetter and self._noSpace:
+        if self._passwordFlags():
             if self._loc not in self._passList:
                 self._passList[self._loc] = {}
                 self._passList[self._loc][self._user] = self._password
@@ -173,7 +185,7 @@ class Passwords:
             print('No loc found')
             self._checkPasswordValidation()
         else:
-            changeLoc = input('Do you want to update existing loc?')
+            changeLoc = input('Do you want to update existing username password?')
             if changeLoc == 'y':
                 self._checkPasswordValidation()
             else:
@@ -196,7 +208,7 @@ class Passwords:
         for location, user in self._passList.items():
             for u1, p in user.items():
                 if location == l:
-                    userList += u1
+                    userList += u1 + ' '
         return userList
 
     """
@@ -233,6 +245,9 @@ class Passwords:
         self._weirdSymbol = False
         self._hasLetter = False
         self._hasNumber = False
+        self._loc = ''
+        self._password = ''
+        self._user = ''
     """def showLocation(self):
         return self._loc
 
