@@ -7,12 +7,12 @@ import string
 import sys
 import pyperclip
 
-# add username to password
-# at the moment its only location and password
+
 class Passwords:
     def __init__(self):
         print('here')
-        self._key = ''
+        self._loc = ''
+        self.user = ''
         self._password = ''
         self._noSpace = True
         self._minLength = False
@@ -23,6 +23,12 @@ class Passwords:
         self._passList = {}
         self._mypath = '/home/gill/Desktop/passwordKeeper/newFile.pickle'
 
+        """
+            _passList = {location : password}
+                | 
+                V
+            _passList = {location : {user: password}, {user2: password}
+        """
         if os.path.isfile(self._mypath):
             with open("newFile.pickle", "rb") as handle:
                 self._passList = pickle.load(handle)
@@ -35,8 +41,54 @@ class Passwords:
     def _setPassword(self, p):
         self._password = p
 
-    def _setKey(self, k):
-        self._key = k
+    def _setloc(self, k):
+        self._loc = k
+
+    def _setUser(self, u):
+        self._user = u
+
+    """
+        Adds the loc-pair value to the dictionary [_passList] and updates the .pickle file with the new dictionary info
+    """
+    def _saveKeyPairValue(self):
+        with open('newFile.pickle', 'wb') as handle:
+            pickle.dump(self._passList, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        input('Press enter to continue...')
+
+    """
+        Searches the dictionary to check if the key of the class exists within it
+    """
+    def _searchForLoc(self):
+        for location, user in self._passList.items():
+            for u1, p, in user.items():
+                if u1 in self._user:
+                    return True
+        return False
+
+    """
+        Gets the key and password from user and checks if its a user inputed password or to generate a password
+        calls the appropriate method
+    """
+    def _addInformation(self, loc, user, pas):
+        self._setUser(user)
+        self._setloc(loc)
+        if '!gen' in pas:
+            val = pas.split(' ')
+            if len(val) > 1:
+                print(val[1])
+                self._generatePassword(val[1])
+
+            else:
+                self._generatePassword(val[0])
+        else:
+            self._setPassword(pas)
+
+        # if the list is empty calls check validation for password
+        if not bool(self._passList):
+            self._checkPasswordValidation()
+            print('was empty adding items')
+        else:
+            self._checkKeyPairValue()
 
     """
         Generates a password depending whether or not a valid length of was provided. If no valid length it goes to 
@@ -53,33 +105,21 @@ class Passwords:
         self._setPassword(randPas)
 
     """
-        Adds the key-pair value to the dictionary [_passList] and updates the .pickle file with the new dictionary info
+        Checks password. Calls to see if length and valid inputs. If corrects adds 
     """
-    def _saveKeyPairValue(self):
-        self._passList.update({str(self._key): str(self._password)})
-        with open('newFile.pickle', 'wb') as handle:
-            pickle.dump(self._passList, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        input('Press enter to continue...')
-
-    """
-        Searches the dictionary to check if the key of the class exists within it
-    """
-    def _searchForKey(self):
-        if self._key in self._passList:
-            return True
-        return False
-
-    """
-        Searches the key given by the user. If found sets both the key and password to the class in order to retrive 
-        the information to the user
-    """
-    def _searchForExistingKey(self, k):
-        print('searching')
-        if k in self._passList:
-            self._setKey(k)
-            self._setPassword(self._passList[self._key])
-            return True
-        return False
+    def _checkPasswordValidation(self):
+        self._checkIfValidLength()
+        self._checkifValidInput()
+        if self._minLength and self._weirdSymbol and self._capLetter and self._noSpace:
+            if self._loc not in self._passList:
+                self._passList[self._loc] = {}
+                self._passList[self._loc][self._user] = self._password
+            else:
+                self._passList[self._loc][self._user] = self._password
+                input('updated new key-value')
+            self._saveKeyPairValue()
+        else:
+            print('Not all conditions met!')
 
     """
         Checks the length of the password for a valid length set to 5 or greater as default
@@ -123,74 +163,67 @@ class Passwords:
             input('No weird Symbol in password!!')
 
     """
-        Gets the key and password from user and checks if its a user inputed password or to generate a password
-        calls the appropriate method
-    """
-    def _addInformation(self, key, pas):
-        self._setKey(key)
-        if '!gen' in pas:
-            val = pas.split(' ')
-            if len(val) > 1:
-                print(val[1])
-                self._generatePassword(val[1])
-
-            else:
-                self._generatePassword(val[0])
-        else:
-            self._setPassword(pas)
-
-        # if the list is empty calls check validation for password
-        if not bool(self._passList):
-            self._checkPasswordValidation()
-            print('was empty adding items')
-        else:
-            self._checkKeyPairValue()
-
-    """
-        Checks password. Calls to see if length and valid inputs. If corrects adds 
-    """
-    def _checkPasswordValidation(self):
-        self._checkIfValidLength()
-        self._checkifValidInput()
-        if self._minLength and self._weirdSymbol and self._capLetter and self._noSpace:
-            input('updated new key-value')
-            self._saveKeyPairValue()
-
-    """
         Checks if there is an existing key that the user inputed if yes, asks if user wants to replace password else do
         nothing. Also checks for password validation if all correct saves to .pickle file
     """
     def _checkKeyPairValue(self):
-        foundKey = self._searchForKey()
-        if not foundKey:
-            print('No key found')
+        foundLoc = self._searchForLoc()
+        input(foundLoc)
+        if not foundLoc:
+            print('No loc found')
             self._checkPasswordValidation()
         else:
-            changeKey = input('Do you want to update existing key?')
-            if changeKey == 'y':
+            changeLoc = input('Do you want to update existing loc?')
+            if changeLoc == 'y':
                 self._checkPasswordValidation()
             else:
                 input('Press any button cont...')
 
     """
-        Gets the password from user inputed key if key exists
+        Gets the password from user inputed loc if loc exists
     """
-    def _getPassFromDict(self, k):
-        if self._searchForExistingKey(k):
-            print('Key Exists')
-            print('key: ', self._key)
+    def _getPassFromDict(self, l, u):
+        if self._searchForExistingLoc(l, u):
+            # print('loc Exists')
+            print('loc: ', self._loc)
             print('value: ', self._password)
             input('Current Items. \nPress enter to continue...')
         else:
             print('No account in database')
 
+    def _getUsersFromDict(self, l):
+        userList = ""
+        for location, user in self._passList.items():
+            for u1, p in user.items():
+                if location == l:
+                    userList += u1
+        return userList
+
+    """
+        Searches the loc given by the user. If found sets both the loc and password to the class in order to retrive 
+        the information to the user
+    """
+    def _searchForExistingLoc(self, l, u):
+        # print('searching')
+        for location, user in self._passList.items():
+            for u1, p1 in user.items():
+                if location == l and u1 == u:
+                    self._setloc(l)
+                    self._setPassword(self._passList[self._loc][u1])
+                    return True
+        return False
+
     """
         prints dictionary items
     """
     def printDictionary(self):
-        for k, v in self._passList.items():
-            print('key: ' + k)
-            print('value: ' + v)
+        # location and inner dictionary
+        for l, u in self._passList.items():
+            # user and password from inner dictionary
+            for u1, p in u.items():
+                print('loc: ',  l)
+                print('value: ', u1)
+                print('password:', p)
         input('Current Items. \nPress enter to continue...')
 
     def _resetParameters(self):
@@ -201,7 +234,7 @@ class Passwords:
         self._hasLetter = False
         self._hasNumber = False
     """def showLocation(self):
-        return self._key
+        return self._loc
 
     def showPassword(self):
         return self._password"""
@@ -234,19 +267,27 @@ def main():
             elif iv == 1:
                 app_on = False
             elif iv == 2:
-                key = input('Enter Key:')
-                value = input('Enter Value:')
-                p._addInformation(key, value)
+                loc = input('Enter loc: ')
+                username = input('Enter username: ')
+                value = input('Enter Value: ')
+                p._addInformation(loc, username, value)
             elif iv == 3:
-                key = input('Enter Key:')
+                loc = input('Enter loc:')
 
             else:
                 print('invalid input')
         sys.exit()
     else:
-        account = sys.argv[1]  # first command line arg is the account name
-        print('Account: {}'.format(account))
-        p._getPassFromDict(account)
+        if len(sys.argv) == 2:
+            account = sys.argv[1]  # first command line arg is the account name
+            print('Account: {}'.format(account))
+            print(p._getUsersFromDict(account))
+        else:
+            account = sys.argv[1]  # first command line arg is the account name
+            user = sys.argv[2]
+            print('Account: {}'.format(account))
+            print('User: {}'.format(user))
+            p._getPassFromDict(account, user)
 
 
 if __name__ == "__main__":
