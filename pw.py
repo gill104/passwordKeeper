@@ -8,6 +8,17 @@ import sys
 import pyperclip
 
 
+def _normalizeLocation(loc):
+    location = ''
+    for x in loc:
+        if x == ' ':
+            location += '_'
+        else:
+            location += x.lower()
+    # print(location)
+    return location
+
+
 class Passwords:
     def __init__(self):
         print('here')
@@ -20,6 +31,7 @@ class Passwords:
         self._weirdSymbol = False
         self._hasLetter = False
         self._hasNumber = False
+        self._accepted = False
         self._passList = {}
         self._mypath = '/home/gill/Desktop/passwordKeeper/newFile.pickle'
 
@@ -41,7 +53,7 @@ class Passwords:
     def _setPassword(self, p):
         self._password = p
 
-    def _setloc(self, k):
+    def _setLoc(self, k):
         self._loc = k
 
     def _setUser(self, u):
@@ -50,7 +62,7 @@ class Passwords:
     """
         Adds the loc-pair value to the dictionary [_passList] and updates the .pickle file with the new dictionary info
     """
-    def _saveKeyPairValue(self):
+    def _savePickleFile(self):
         with open('newFile.pickle', 'wb') as handle:
             pickle.dump(self._passList, handle, protocol=pickle.HIGHEST_PROTOCOL)
         self._resetParameters()
@@ -60,21 +72,17 @@ class Passwords:
         Searches the dictionary to check if the key of the class exists within it
     """
     def _searchForLoc(self):
-        for location, user in self._passList.items():
-            for u1, p, in user.items():
-                if u1 == self._user:
+        if self._loc in self._passList:
+            for username, password in self._passList[self._loc].items():
+                if username == self._user:
                     return True
-        return False
+            return False
+        """for location, user in self._passList.items():
+            for u1, p, in user.items():
+                if u1 == self._user and location == self._loc:
+                    return True
+        return False"""
 
-    def _normalizeLocation(self, loc):
-        location = ''
-        for x in loc:
-            if x == ' ':
-                location += '_'
-            else:
-                location += x.lower()
-        print(location)
-        return location
     """
         Gets the key and password from user and checks if its a user inputed password or to generate a password
         calls the appropriate method
@@ -82,12 +90,13 @@ class Passwords:
     # add a filter to location spaces == _ and all lowercase
     def _addInformation(self, loc, user, pas):
         self._setUser(user)
-        self._setloc(self._normalizeLocation(loc))
+        self._setLoc(_normalizeLocation(loc))
+
         if '!gen' in pas:
             val = pas.split(' ')
             # for user defined length
             if len(val) > 1:
-                print(val[1])
+                #print(val[1])
                 self._generatePassword(val[1])
             else:
                 self._generatePassword(val[0])
@@ -95,11 +104,12 @@ class Passwords:
             self._setPassword(pas)
 
         # if the list is empty calls check validation for password
+
         if not bool(self._passList):
             self._checkPasswordValidation()
             print('was empty adding items')
         else:
-            self._checkKeyPairValue()
+            self._checkUserName()
 
     """
         Generates a password depending whether or not a valid length of was provided. If no valid length it goes to 
@@ -115,31 +125,38 @@ class Passwords:
                            for n in range(pasLength)])
 
         self._setPassword(randPas)
+
         self._checkifValidInput()
         self._checkIfValidLength()
-
         if not self._passwordFlags():
             self._generatePassword(v)
 
     def _passwordFlags(self):
-        if self._minLength and self._weirdSymbol and self._capLetter and self._hasNumber and self._hasLetter and self._noSpace:
-            return True
-        print('INVALID PASSWORD')
-        return False
+        if not self._accepted:
+            if self._minLength and self._weirdSymbol and self._capLetter and self._hasNumber and self._hasLetter and self._noSpace:
+                print('Password Accepted: ', self._password)
+                self._accepted = True
+                return True
+            print('Invalid password given')
+            return False
+        else:
+            pass
+
     """
         Checks password. Calls to see if length and valid inputs. If corrects adds 
     """
     def _checkPasswordValidation(self):
         self._checkIfValidLength()
         self._checkifValidInput()
-        if self._passwordFlags():
+        if self._accepted or self._passwordFlags():
+            # creates a new dictionary to place within self._passList else just adds to existing items
             if self._loc not in self._passList:
                 self._passList[self._loc] = {}
                 self._passList[self._loc][self._user] = self._password
             else:
                 self._passList[self._loc][self._user] = self._password
                 input('updated new key-value')
-            self._saveKeyPairValue()
+            self._savePickleFile()
         else:
             print('Not all conditions met!')
 
@@ -151,7 +168,7 @@ class Passwords:
         if pLen > 5:
             self._minLength = True
         else:
-            print('Invalid password length')
+            print('Error: Invalid length')
             input('Press any button to cont...')
 
     """
@@ -162,44 +179,44 @@ class Passwords:
         while position < len(self._password):
             if str(self._password[position]).isspace():
                 self._noSpace = False
-                print('Space in password. Invalid')
+                print('Error: Space in password')
                 input('Press any button to cont...')
                 break
             if str(self._password[position]).isdigit():
                 self._hasNumber = True
-                print('digit pLen[i]:', self._password[position])
+                # print('digit pLen[i]:', self._password[position])
                 position += 1
 
             elif str(self._password[position]).isalpha():
                 self._hasLetter = True
-                print('alpha pLen[i]:', self._password[position])
+                # print('alpha pLen[i]:', self._password[position])
                 if str(self._password[position]).isupper():
                     self._capLetter = True
                 position += 1
             else:
-                print('None pLen[i]:', self._password[position])
+                # print('None pLen[i]:', self._password[position])
                 position += 1
                 self._weirdSymbol = True
 
         if not self._weirdSymbol:
-            input('No weird Symbol in password!!')
+            print('Error: No weird Symbol')
+            input('Press any button to cont...')
 
     """
         Checks if there is an existing key that the user inputed if yes, asks if user wants to replace password else do
         nothing. Also checks for password validation if all correct saves to .pickle file
     """
-    def _checkKeyPairValue(self):
-        foundLoc = self._searchForLoc()
-        input(foundLoc)
-        if not foundLoc:
-            print('No loc found')
-            self._checkPasswordValidation()
-        else:
-            changeLoc = input('Do you want to update existing username password?')
+    def _checkUserName(self):
+        dupeUserName = self._searchForLoc()
+        # input(dupeUserName)
+        if dupeUserName:
+            changeLoc = input('Username\Password exists...Want to update password?')
             if changeLoc == 'y':
                 self._checkPasswordValidation()
             else:
                 input('Press any button cont...')
+        else:
+            self._checkPasswordValidation()
 
     """
         Gets the password from user inputed loc if loc exists
@@ -207,12 +224,15 @@ class Passwords:
     def _getPassFromDict(self, l, u):
         if self._searchForExistingLoc(l, u):
             # print('loc Exists')
-            print('loc: ', self._loc)
-            print('value: ', self._password)
-            input('Current Items. \nPress enter to continue...')
+            # print('loc: ', self._loc)
+            print('Password: ', self._password)
+            input('\nPress enter to continue...')
         else:
-            print('No account in database')
+            print('No User in database')
 
+    """
+        Lists the users in the dictionary from the given location
+    """
     def _getUsersFromDict(self, l):
         userList = ""
         for location, user in self._passList.items():
@@ -230,7 +250,7 @@ class Passwords:
         for location, user in self._passList.items():
             for u1, p1 in user.items():
                 if location == l and u1 == u:
-                    self._setloc(l)
+                    self._setLoc(l)
                     self._setPassword(self._passList[self._loc][u1])
                     return True
         return False
@@ -258,12 +278,6 @@ class Passwords:
         self._loc = ''
         self._password = ''
         self._user = ''
-    """def showLocation(self):
-        return self._loc
-
-    def showPassword(self):
-        return self._password"""
-
 
 def switchInput(inputValue):
     switchDict = {
@@ -292,9 +306,10 @@ def main():
             elif iv == 1:
                 app_on = False
             elif iv == 2:
-                loc = input('Enter loc: ')
-                username = input('Enter username: ')
-                value = input('Enter Value: ')
+                loc = input('Enter Location: ')
+                username = input('Enter Username: ')
+                value = input('Enter Password: ')
+
                 p._addInformation(loc, username, value)
             elif iv == 3:
                 loc = input('Enter loc:')
