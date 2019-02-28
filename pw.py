@@ -137,8 +137,9 @@ class Passwords:
                 print('Password Accepted: ', self._password)
                 self._accepted = True
                 return True
-            print('Invalid password given')
-            return False
+            else:
+                print('Invalid password given')
+                return False
         else:
             pass
 
@@ -275,6 +276,7 @@ class Passwords:
         self._weirdSymbol = False
         self._hasLetter = False
         self._hasNumber = False
+        self._accepted = False
         self._loc = ''
         self._password = ''
         self._user = ''
