@@ -92,24 +92,43 @@ class Passwords:
         self._setUser(user)
         self._setLoc(_normalizeLocation(loc))
 
+        looping = self._passwordLoop(pas)
+
+        while not looping:
+            os.system('cls' if os.name == 'nt' else 'clear')
+            self._resetPasswordParameters()
+            pas = input('Re-enter a new password: ')
+            looping = self._passwordLoop(pas)
+        self._checkUserName()
+
+    def _passwordLoop(self, pas):
         if '!gen' in pas:
             val = pas.split(' ')
             # for user defined length
             if len(val) > 1:
-                #print(val[1])
+                # print(val[1])
                 self._generatePassword(val[1])
-            else:
+                return True
+            elif len(val) <= 1:
                 self._generatePassword(val[0])
-        else:
-            self._setPassword(pas)
+                return True
+            else:
+                return False
 
+        self._setPassword(pas)
+        self._checkPasswordValidation()
+        self._passwordFlags()
         # if the list is empty calls check validation for password
 
-        if not bool(self._passList):
-            self._checkPasswordValidation()
-            print('was empty adding items')
+        if self._accepted:
+            if not bool(self._passList):
+                return True
+                print('was empty adding items')
+            else:
+                return True
         else:
-            self._checkUserName()
+            print('Bad Password')
+            return False
 
     """
         Generates a password depending whether or not a valid length of was provided. If no valid length it goes to 
@@ -125,31 +144,35 @@ class Passwords:
                            for n in range(pasLength)])
 
         self._setPassword(randPas)
+        self._checkPasswordValidation()
 
-        self._checkifValidInput()
-        self._checkIfValidLength()
         if not self._passwordFlags():
+            self._resetPasswordParameters()
             self._generatePassword(v)
 
     def _passwordFlags(self):
-        if not self._accepted:
+        if self._accepted:
+            return True
+        else:
+
             if self._minLength and self._weirdSymbol and self._capLetter and self._hasNumber and self._hasLetter and self._noSpace:
-                print('Password Accepted: ', self._password)
+                print('Password Accepted:', self._password)
                 self._accepted = True
                 return True
             else:
                 print('Invalid password given')
                 return False
-        else:
-            pass
+
+    def _checkPasswordValidation(self):
+        self._checkIfValidLength()
+        self._checkifValidInput()
 
     """
         Checks password. Calls to see if length and valid inputs. If corrects adds 
     """
-    def _checkPasswordValidation(self):
-        self._checkIfValidLength()
-        self._checkifValidInput()
-        if self._accepted or self._passwordFlags():
+    def _sendIt(self):
+
+        if self._accepted:
             # creates a new dictionary to place within self._passList else just adds to existing items
             if self._loc not in self._passList:
                 self._passList[self._loc] = {}
@@ -169,8 +192,8 @@ class Passwords:
         if pLen > 5:
             self._minLength = True
         else:
+            print(pLen)
             print('Error: Invalid length')
-            input('Press any button to cont...')
 
     """
         Validates user inputed password; ticks off flags to make sure password is correct
@@ -181,7 +204,6 @@ class Passwords:
             if str(self._password[position]).isspace():
                 self._noSpace = False
                 print('Error: Space in password')
-                input('Press any button to cont...')
                 break
             if str(self._password[position]).isdigit():
                 self._hasNumber = True
@@ -201,7 +223,12 @@ class Passwords:
 
         if not self._weirdSymbol:
             print('Error: No weird Symbol')
-            input('Press any button to cont...')
+        if not self._capLetter:
+            print('Error: No capital letter')
+        if not self._hasLetter:
+            print('Error: No letters')
+        if not self._hasNumber:
+            print('Error: No Numbers')
 
     """
         Checks if there is an existing key that the user inputed if yes, asks if user wants to replace password else do
@@ -213,11 +240,11 @@ class Passwords:
         if dupeUserName:
             changeLoc = input('Username\Password exists...Want to update password?')
             if changeLoc == 'y':
-                self._checkPasswordValidation()
+                self._sendIt()
             else:
-                input('Press any button cont...')
+                input('Returning to menu!')
         else:
-            self._checkPasswordValidation()
+            self._sendIt()
 
     """
         Gets the password from user inputed loc if loc exists
@@ -267,9 +294,9 @@ class Passwords:
                 print('loc: ',  l)
                 print('value: ', u1)
                 print('password:', p)
-        input('Current Items. \nPress enter to continue...')
+        input('Press enter to continue...')
 
-    def _resetParameters(self):
+    def _resetPasswordParameters(self):
         self._noSpace = True
         self._minLength = False
         self._capLetter = False
@@ -277,6 +304,9 @@ class Passwords:
         self._hasLetter = False
         self._hasNumber = False
         self._accepted = False
+
+    def _resetParameters(self):
+        self._resetPasswordParameters()
         self._loc = ''
         self._password = ''
         self._user = ''
