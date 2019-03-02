@@ -30,8 +30,8 @@ class Passwords:
         self._hasLetter = False
         self._hasNumber = False
         self._accepted = False
+        self._generatingRand = False
         self._passList = {}
-
         self._mypath = '/home/gill/Desktop/passwordKeeper/newFile.pickle'
 
         """
@@ -105,8 +105,10 @@ class Passwords:
             val = pas.split(' ')
             # for user defined length
             if len(val) > 1:
-                self._generatePassword(val[1])
-                return True
+                if int(val[1]) > 5:
+                    self._generatePassword(val[1])
+                    return True
+                return False
             elif len(val) <= 1:
                 self._generatePassword(val[0])
                 return True
@@ -132,6 +134,7 @@ class Passwords:
         default value of 12. Sets the random password to be a combination of letters(cap and lower digits and symbols
     """
     def _generatePassword(self, v):
+        self._generatingRand = True
         if v.isdigit():
             pasLength = int(v)
         else:
@@ -161,7 +164,8 @@ class Passwords:
                 self._accepted = True
                 return True
             else:
-                print('Invalid password given')
+                if not self._generatingRand:
+                    print('Invalid password given')
                 return False
 
     """
@@ -206,7 +210,8 @@ class Passwords:
         while position < len(self._password):
             if str(self._password[position]).isspace():
                 self._noSpace = False
-                print('Error: Space in password')
+                if not self._generatingRand:
+                    print('Error: Space in password')
                 break
             if str(self._password[position]).isdigit():
                 self._hasNumber = True
@@ -223,15 +228,15 @@ class Passwords:
                 # print('None pLen[i]:', self._password[position])
                 position += 1
                 self._weirdSymbol = True
-
-        if not self._weirdSymbol:
-            print('Error: No weird Symbol')
-        if not self._capLetter:
-            print('Error: No capital letter')
-        if not self._hasLetter:
-            print('Error: No letters')
-        if not self._hasNumber:
-            print('Error: No Numbers')
+        if not self._generatingRand:
+            if not self._weirdSymbol:
+                print('Error: No weird Symbol')
+            if not self._capLetter:
+                print('Error: No capital letter')
+            if not self._hasLetter:
+                print('Error: No letters')
+            if not self._hasNumber:
+                print('Error: No Numbers')
 
     """
         Checks if there is an existing key that the user inputed if yes, asks if user wants to replace password else do
@@ -290,7 +295,7 @@ class Passwords:
     """
         prints dictionary items
     """
-    def printDictionary(self):
+    def _printDictionary(self):
         # location and inner dictionary
         for l, u in self._passList.items():
             # user and password from inner dictionary
@@ -308,6 +313,7 @@ class Passwords:
         self._hasLetter = False
         self._hasNumber = False
         self._accepted = False
+        self._generatingRand = False
 
     def _resetParameters(self):
         self._resetPasswordParameters()
@@ -329,7 +335,8 @@ def switchInput(inputValue):
 def main():
     p = Passwords()
     if len(sys.argv) < 2:
-        print('Usage: python pw.py[account] - copy account password')
+        print('Usage: python3 pw.py[Location][username] - copy account password')
+        print('Usage: python3 pw.py[location] - gives username within location')
         app_on = True
         while app_on:
             # rests all parameters of the password
@@ -339,7 +346,7 @@ def main():
             takeMeTo = input('\'!display\', \'input\', \'!q\'\nWhat do you want to do? ')
             iv = switchInput(takeMeTo)
             if iv == 0:
-                p.printDictionary()
+                p._printDictionary()
             elif iv == 1:
                 app_on = False
             elif iv == 2:
