@@ -254,6 +254,10 @@ class Passwords:
             # print('loc Exists')
             # print('loc: ', self._loc)
             print('Password: ', self._password)
+            """
+                If using linux: “sudo apt-get install xclip” 
+            """
+            pyperclip.copy(str(self._password))
             input('\nPress enter to continue...')
         else:
             print('No User in database')
@@ -310,6 +314,7 @@ class Passwords:
         self._loc = ''
         self._password = ''
         self._user = ''
+
 
 def switchInput(inputValue):
     switchDict = {
