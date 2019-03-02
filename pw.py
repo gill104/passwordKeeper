@@ -15,13 +15,11 @@ def _normalizeLocation(loc):
             location += '_'
         else:
             location += x.lower()
-    # print(location)
     return location
 
 
 class Passwords:
     def __init__(self):
-        print('here')
         self._loc = ''
         self.user = ''
         self._password = ''
@@ -33,6 +31,7 @@ class Passwords:
         self._hasNumber = False
         self._accepted = False
         self._passList = {}
+
         self._mypath = '/home/gill/Desktop/passwordKeeper/newFile.pickle'
 
         """
@@ -60,16 +59,17 @@ class Passwords:
         self._user = u
 
     """
-        Adds the loc-pair value to the dictionary [_passList] and updates the .pickle file with the new dictionary info
+        saves the dictionary _passlist to a .pickle file
     """
     def _savePickleFile(self):
         with open('newFile.pickle', 'wb') as handle:
             pickle.dump(self._passList, handle, protocol=pickle.HIGHEST_PROTOCOL)
         self._resetParameters()
-        input('Press enter to continue...')
+        input('Saved information\nPress enter to continue...')
 
     """
-        Searches the dictionary to check if the key of the class exists within it
+        Checks if given location exists within dictionary if so then it searches for username within that location
+        returns a T/F 
     """
     def _searchForLoc(self):
         if self._loc in self._passList:
@@ -77,15 +77,10 @@ class Passwords:
                 if username == self._user:
                     return True
             return False
-        """for location, user in self._passList.items():
-            for u1, p, in user.items():
-                if u1 == self._user and location == self._loc:
-                    return True
-        return False"""
 
     """
-        Gets the key and password from user and checks if its a user inputed password or to generate a password
-        calls the appropriate method
+        Sets the location and username that were inputed by the user; normalize the location to remove spaces and upper-
+        case letters. Loops if the password is set incorrectly by the user until they enter a correct password
     """
     # add a filter to location spaces == _ and all lowercase
     def _addInformation(self, loc, user, pas):
@@ -101,12 +96,15 @@ class Passwords:
             looping = self._passwordLoop(pas)
         self._checkUserName()
 
+    """
+        Gets the password information checks whether to generate a password for use user inputed password. Here password
+        is send to get validated returning a T/F back to _addInformation
+    """
     def _passwordLoop(self, pas):
         if '!gen' in pas:
             val = pas.split(' ')
             # for user defined length
             if len(val) > 1:
-                # print(val[1])
                 self._generatePassword(val[1])
                 return True
             elif len(val) <= 1:
@@ -123,7 +121,6 @@ class Passwords:
         if self._accepted:
             if not bool(self._passList):
                 return True
-                print('was empty adding items')
             else:
                 return True
         else:
@@ -150,6 +147,10 @@ class Passwords:
             self._resetPasswordParameters()
             self._generatePassword(v)
 
+    """
+        Checks the boolean conditions for the password to trigger _accepted. If _accepted it returns true since no need
+        to recheck an accepted password
+    """
     def _passwordFlags(self):
         if self._accepted:
             return True
@@ -163,12 +164,15 @@ class Passwords:
                 print('Invalid password given')
                 return False
 
+    """
+        Checks the length and conditionals on the password
+    """
     def _checkPasswordValidation(self):
         self._checkIfValidLength()
         self._checkifValidInput()
 
     """
-        Checks password. Calls to see if length and valid inputs. If corrects adds 
+        adds the information given by the user to _passlist and calls to save to .pickle file
     """
     def _sendIt(self):
 
@@ -179,7 +183,6 @@ class Passwords:
                 self._passList[self._loc][self._user] = self._password
             else:
                 self._passList[self._loc][self._user] = self._password
-                input('updated new key-value')
             self._savePickleFile()
         else:
             print('Not all conditions met!')
@@ -232,7 +235,7 @@ class Passwords:
 
     """
         Checks if there is an existing key that the user inputed if yes, asks if user wants to replace password else do
-        nothing. Also checks for password validation if all correct saves to .pickle file
+        nothing.
     """
     def _checkUserName(self):
         dupeUserName = self._searchForLoc()
@@ -247,12 +250,10 @@ class Passwords:
             self._sendIt()
 
     """
-        Gets the password from user inputed loc if loc exists
+        Gets the password associated with username from location inputted by user. Also saves to clipboard
     """
     def _getPassFromDict(self, l, u):
         if self._searchForExistingLoc(l, u):
-            # print('loc Exists')
-            # print('loc: ', self._loc)
             print('Password: ', self._password)
             """
                 If using linux: “sudo apt-get install xclip” 
@@ -275,10 +276,9 @@ class Passwords:
 
     """
         Searches the loc given by the user. If found sets both the loc and password to the class in order to retrive 
-        the information to the user
+        the information to the user. Used for command line input
     """
     def _searchForExistingLoc(self, l, u):
-        # print('searching')
         for location, user in self._passList.items():
             for u1, p1 in user.items():
                 if location == l and u1 == u:
